@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>게시물 상세 페이지</title>
+
+    <!-- Custom fonts for this template-->
+    <link href="/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link
+            href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i"
+            rel="stylesheet">
+
+    <!-- Custom styles for this template-->
+    <link href="/css/sb-admin-2.min.css" rel="stylesheet">
+
+    <!-- TUI 에디터 JS CDN -->
+    <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
+    <!-- TUI 에디터 CSS CDN -->
+    <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css" />
+
+</head>
+<style>
+    #modalOpenButton, #modalCloseButton {
+        cursor: pointer;
+    }
+
+    #modalContainer {
+        width: 100%;
+        height: 100%;
+        position: fixed;
+        top: 0;
+        left: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: rgba(0, 0, 0, 0.5);
+    }
+
+    #modalContent {
+        position: absolute;
+        background-color: #ffffff;
+        width: 300px;
+        height: 150px;
+        padding: 15px;
+    }
+
+    #modalContainer.hidden {
+        display: none;
+    }
+</style>
+<body>
+<div id="wrapper">
+    <!-- sidebar -->
+    <div th:include="~{sidebar :: #accordionSidebar}"></div>
+    <!-- content wrapper -->
+    <div id="content-wrapper" class="d-flex flex-column">
+        <!-- main content -->
+        <div id="content">
+            <!-- 여기에 헤더가 들어가면 된다 -->
+            <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+                <h1>로고(메인페이지로 돌아가는 function)</h1>
+            </nav>
+            <!-- page heading -->
+            <div class="container-fluid">
+                <h1 class="h3 mb-1 text-gray-800">게시물의 제목</h1>
+                <div class="row">
+                    <div class="col-lg-4">
+                        <p>글쓴이 | 코드마스터</p>
+                    </div>
+                    <div class="col-lg-4">
+                        <p>작성일 | 2024.05.09 12:26:45</p>
+                    </div>
+                    <div class="col-lg-4">
+                        <p>조회 수 | 56</p>
+                    </div>
+                </div>
+
+                <!-- 본문이 들어갈 toast UI Editor-->
+                <!-- 원래는 editor가 들어가지 않지만 본문 표시를 위해 임시로 해 놓음-->
+                <div class="card">
+                    <div class="card-body">
+                        This is some text within a card body.
+                        This is some text within a card body.
+                        This is some text within a card body.
+                        This is some text within a card body.
+                        This is some text within a card body.
+                        This is some text within a card body.
+                        This is some text within a card body.
+                        This is some text within a card body.
+                        This is some text within a card body.
+                        This is some text within a card body.
+
+                    </div>
+                </div>
+                <!--<div id="editorcontent">
+
+                </div>-->
+                <br>
+
+                <!-- heart button -->
+                <div class="row justify-content-center">
+                    <a href="#" class="btn btn-success btn-circle btn-lg">
+                        <i class="fas fa-heart"></i>
+                    </a>
+                </div>
+
+                <!-- 해시태그, 수정/삭제/목록 버튼 -->
+                <br>
+                <div class="row">
+                    <div class="col-8">
+                        <a>#hashtag 1</a>
+                        <a>#hashtag 2</a>
+                        <a>#hashtag 3</a>
+                    </div>
+
+                    <div class="col-4 text-right">
+                        <button class="btn btn-primary">수정</button>
+                        <button class="btn btn-danger">삭제</button>
+                        <button class="btn btn-secondary">목록</button>
+                    </div>
+                </div>
+
+                <!-- 댓글 작성 -->
+                <hr style="height: 3px; background-color: #007bff;">
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" placeholder="댓글 내용을 입력하세요." aria-label="Recipient's username" aria-describedby="button-addon2">
+                    <button class="btn btn-secondary" type="button" id="button-addon1">댓글 등록</button>
+                </div>
+
+                <!-- 댓글 목록 -->
+                <hr style="height: 3px; background-color: #007bff;">
+                <h3 class="mb-4">
+                    댓글 목록
+                </h3>
+                <div>
+                    <table class="table">
+                        <colgroup>
+                            <col width="15%">
+                            <col width="60%">
+                            <col width="15%">
+                            <col width="10%">
+                        </colgroup>
+                        <thead>
+                        <tr class="text-center">
+                            <td>작성자</td>
+                            <td></td>
+                            <td>작성일</td>
+                            <td></td>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td>코드마스터</td>
+                            <td>시큐리티 어캐함?</td>
+                            <td>2024.05.09 14:26:45</td>
+                            <td>
+                                <div class="row">
+                                    <button class="btn btn-primary btn-sm reply-btn" id="modalOpenButton">답글</button>
+
+                                    <div id="modalContainer" class="hidden">
+                                        <div id="modalContent">
+                                            <p>모달 창 입니다.</p>
+                                            <button id="modalCloseButton">닫기</button>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-secondary btn-sm reply-btn">답글</button>
+                                    <button class="btn btn-danger btn-sm">삭제</button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>코스트코드왕</td>
+                            <td>프론트 먼저ㄱㄱ</td>
+                            <td>2024.05.09 17:26:45</td>
+                            <td>
+                                <div class="row">
+                                    <button class="btn btn-secondary btn-sm">답글</button>
+                                    <button class="btn btn-danger btn-sm">삭제</button>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- end reply-->
+            </div>
+        </div>
+        <!-- end main content -->
+    </div>
+    <!-- end content wrapper -->
+</div>
+</body>
+<script>
+    const modalOpenButton = document.getElementById('modalOpenButton');
+    const modalCloseButton = document.getElementById('modalCloseButton');
+    const modal = document.getElementById('modalContainer');
+
+    modalOpenButton.addEventListener('click', () => {
+        modal.classList.remove('hidden');
+    });
+
+    modalCloseButton.addEventListener('click', () => {
+        modal.classList.add('hidden');
+    });
+</script>
+</html>
