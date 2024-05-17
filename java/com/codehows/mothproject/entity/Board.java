@@ -3,12 +3,14 @@ package com.codehows.mothproject.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Getter
+@Setter
 @NoArgsConstructor
 public class Board {
 
@@ -45,5 +47,13 @@ public class Board {
 
     public void deleteBoard() {
         this.board_condition = "Y";
+    }
+
+    public void increaseHeart() {
+        this.heart += 1;
+    }
+
+    public void decreaseHeart() {
+        this.heart -= 1;
     }
 }

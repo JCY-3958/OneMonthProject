@@ -21,7 +21,25 @@ public class BoardService {
     public void deleteBoard(Long bno) {
         System.out.println("요까지2");
         Board board = repository.findByBno(bno);
+
         board.deleteBoard();
+    }
+
+    //게시물 좋아요
+    @Transactional
+    public void increaseHeart(Long bno) {
+        Board board = repository.findByBno(bno);
+
+        board.increaseHeart();
+    }
+
+    //게시물 좋아요 취소
+    @Transactional
+    public void decreaseHeart(Long bno) {
+        System.out.println("좋아요 취소");
+        Board board = repository.findByBno(bno);
+
+        board.decreaseHeart();
     }
 
 }
