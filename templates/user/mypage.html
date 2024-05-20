@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
 
     <meta charset="utf-8">
@@ -28,7 +28,7 @@
         <div id="content">
 
             <!-- 헤더 영역 -->
-            <div th:include="~{fragments/header :: #header}"></div>
+            <div th:insert="~{fragments/header :: #header}"></div>
 
             <!-- Nested Row within Card Body -->
             <div class="content-fluid row p-5">
@@ -42,7 +42,7 @@
 
                         <!-- 뒤로가기 버튼 -->
                         <div class="col-sm-3 text-right">
-                            <a href="boardlist" class="btn btn-danger btn-icon-split">
+                            <a th:href="@{/Loginmain}" class="btn btn-danger btn-icon-split">
                                 <span class="text">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;뒤로가기&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
                             </a>
                         </div>
@@ -54,23 +54,26 @@
                             <div class="card md-4 py-3 border-left-primary">
                                 <div class="card-body">
                                     <div class="row">
-                                        <div class="col-4">
-                                            <input type="text" placeholder="차가운 게시판" class="form-control">
-                                        </div>
-                                        <div class="col-8 text-right">
-                                            <button class="btn btn-primary text-right">닉네임 변경</button>
-                                        </div>
+                                        <form role="form" method="post" action="/users/changeNickname">
+                                            <div class="col-4">
+                                                <input type="text" th:value="${nickname}" class="form-control">
+                                            </div>
+                                            <ul class="">
+                                            <div class="col-8 text-right">
+                                                <button class="btn btn-primary text-right">닉네임 변경</button>
+                                            </div>
+                                        </form>
                                     </div>
                                 </div>
                             </div>
                             <div class="card md-4 py-3 border-left-primary">
                                 <div class="card-body">
-                                    이메일 : msmk908@naver.com
+                                    이메일 : <span th:text="${email}"/>
                                 </div>
                             </div>
                             <div class="card md-4 py-3 border-left-primary">
                                 <div class="card-body">
-                                    가입일 : 2024-05-16
+                                    가입일 : <span th:text="${#temporals.format(regdate, 'yyyy-MM-dd HH:mm:ss')}"/>
                                 </div>
                             </div>
                         </div>
@@ -87,7 +90,7 @@
             </div>
 
             <!-- 푸터 영역 -->
-            <div th:include="~{fragments/footer :: #footer}"></div>
+            <div th:insert="~{fragments/footer :: #footer}"></div>
 
         </div>
     </div>
