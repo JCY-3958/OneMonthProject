@@ -2,6 +2,7 @@ package com.codeqna.controller;
 
 import com.codeqna.dto.AddBoardRequest;
 import com.codeqna.dto.HeartDto;
+import com.codeqna.dto.ModifyBoardRequest;
 import com.codeqna.dto.ParentReplyDto;
 import com.codeqna.entity.Board;
 import com.codeqna.entity.Heart;
@@ -24,7 +25,7 @@ public class BoardApiController {
     private final ReplyService replyService;
     private final HeartService heartService;
 
-    //게시물 등록
+    // 게시물 등록
     @PostMapping("/register")
     public ResponseEntity<Board> addBoard(@RequestBody AddBoardRequest request){
         Board savedBoard = boardService.save(request);
@@ -32,11 +33,19 @@ public class BoardApiController {
         return ResponseEntity.status(HttpStatus.CREATED).body(savedBoard);
     }
 
-    //게시물 검색
+    // 게시물 검색
     @GetMapping("/searchTable")
     public List<Board> searchBoards(@RequestParam("condition") String condition,
                                     @RequestParam("keyword") String keyword) {
         return boardService.searchBoards(condition, keyword);
+    }
+
+    // 게시물 수정
+    @PostMapping("/modify")
+    public ResponseEntity<Board> modifyBoard(@RequestBody ModifyBoardRequest request){
+        Board modifiedBoard = boardService.modify(request);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(modifiedBoard);
     }
 
 

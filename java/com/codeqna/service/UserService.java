@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -38,11 +39,6 @@ public class UserService implements UserDetailsService {
         }
     }
 
-    public boolean isNicknameExist(String nickname){
-        Users existNickname = userRepository.findByNickname(nickname);
-        return existNickname == null;
-    }
-
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         Users users = userRepository.findByEmail(email);
@@ -57,9 +53,25 @@ public class UserService implements UserDetailsService {
                 .build();
     }
 
-    public void updateNickname(String nickname) throws Exception{
-        if (!nickname.isBlank()){
-            Users updateUser = userRepository.findByNickname(nickname);
+    public boolean nicknameExists(String nickname) {
+        return userRepository.existsByNickname(nickname);
+    }
+
+
+    public boolean updateNickname(String email, String newNickname){
+        Users users = userRepository.findByEmail(email);
+        if (users != null) {
+            users.setNickname(newNickname);
+            userRepository.save(users);
+            return true;
+        } else {
+            return false;
         }
     }
+
+    public String getNicknameByEmail(String email){
+        Users users = userRepository.findByEmail(email);
+        return (users != null) ? users.getNickname() : null;
+    }
+
 }

@@ -4,10 +4,7 @@ package com.codeqna.entity;
 import com.codeqna.constant.UserRole;
 import com.codeqna.dto.UserFormDto;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicInsert;
 import org.springframework.data.annotation.CreatedDate;
@@ -18,7 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.time.LocalDateTime;
 
 @Entity
-@Getter
+@Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -38,7 +35,7 @@ public class Users {
     @Column(name = "nickname", unique = true, nullable = false)
     private String nickname;
 
-    @Column(name = "password", nullable = false)
+    @Column(name = "password")
     private String password;
 
     @Enumerated(EnumType.STRING)
@@ -53,7 +50,7 @@ public class Users {
     @Column(name = "regdate")
     private LocalDateTime regdate;
 
-    @Column(name = "user_condition", columnDefinition = "VARCHAR(5) DEFAULT 'Y' ")
+    @Column(name = "user_condition", columnDefinition = "VARCHAR(5) DEFAULT 'N' ")
     private String user_condition;
 
     public void setNewNickname(String nickname){

@@ -90,14 +90,17 @@ public class ViewController {
 
     @GetMapping("/modifyboard")
     public String modifyboard(@RequestParam(required = false) Long bno, Model model){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        Users users = userRepository.findByEmail(email);
+        model.addAttribute("nickname", users.getNickname());
+
         //지금은 board 데이터 전부 다 넘겨주고 있는데
         //나중에 제목, 내용, 해시태그, 첨부파일 이것만 보내주면 댐
         Board board = boardService.findByBno(bno);
         model.addAttribute("board", board);
         return "modifyboard";
     }
-
-    private final BoardService service;
 
     @GetMapping("/viewboard/{bno}")
     public String viewBoard(@PathVariable Long bno, Model model) {
@@ -130,8 +133,11 @@ public class ViewController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
         Users users = userRepository.findByEmail(email);
+
         if(users != null) {
             model.addAttribute("nickname", users.getNickname());
+            model.addAttribute("role", users.getUser_role());
+            //System.out.println("사용자 권한: " + users.getUser_role());
         } else {
             model.addAttribute("nickname", "");
         }
