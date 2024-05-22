@@ -22,6 +22,9 @@
 
         var bno = document.getElementById('boardBno').value;
         var nickname = document.getElementById("nickname").value;
+        //var role = document.getElementById("role").value;
+
+        //console.log("사용자 권한: " + role);
 
         //사용자가 게시물에 좋아요를 눌렀는지
         //console.log("닉넴:" + nickname);
@@ -297,6 +300,7 @@
             <!-- page heading -->
             <div class="container-fluid">
                 <input type="hidden" id="nickname" th:value="${nickname}">
+                <input type="hidden" id="role" th:value="${role}">
                 <input type="hidden" id="boardBno" th:value="${board.bno}">
                 <h1 class="h3 mb-1 text-gray-800" th:text="${board.title}"></h1>
                 <div class="row">
@@ -344,7 +348,7 @@
                                 th:onclick="|location.href='@{/modifyboard?bno={bno}(bno=${board.bno})}'|"
                                 th:disabled="${nickname != board.nickname}">수정</button>
                         <button id="deleteBoard" class="btn btn-danger"
-                                th:disabled="${nickname != board.nickname && nickname != 'admin'}">삭제</button>
+                                th:attr="disabled=${!(nickname == board.nickname || role == 'ADMIN')}">삭제</button>
                         <button th:onclick="|location.href='@{/main}'|" class="btn btn-secondary">목록</button>
                     </div>
                 </div>

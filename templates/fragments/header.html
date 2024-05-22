@@ -29,6 +29,7 @@
             <a class="navbar-brand" sec:authorize="isAnonymous()" href="/main" style="color: white">Code Q&A</a>
             <a class="navbar-brand" sec:authorize="hasAnyAuthority('ROLE_USER')" href="/Loginmain" style="color: white">Code Q&A</a>
             <a class="navbar-brand" sec:authorize="hasAnyAuthority('ROLE_ADMIN')" href="/Loginmain" style="color: white">Code Q&A</a>
+            <input type="hidden" id="nickname" th:value="${nickname}">
             <div class="collapse navbar-collapse" id="navbarNavDropdown">
                 <ul class="navbar-nav mr-auto">
 
