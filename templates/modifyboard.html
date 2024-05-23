@@ -59,7 +59,7 @@
 
                         <!-- 취소버튼 -->
                         <div class="col-sm-3 text-right">
-                            <a th:href="@{/viewboard/{bno}(bno=${board.bno})}" class="btn btn-danger btn-icon-split">
+                            <a th:href="@{/viewboard/{bno}(bno=${board.bno})}" class="btn btn-danger btn-icon-split" id="cancel-button">
                                 <span class="text">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;취소 버튼&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
                             </a>
                         </div>
@@ -230,9 +230,10 @@
 
 <!-- 드롭존 스크립트 -->
 <script>
-    Dropzone.autoDiscover = false; // deprecated 된 옵션. false로 해놓는걸 공식문서에서 명시
+    Dropzone.autoDiscover = false;
 
     let uploadedFiles = []; // 업로드된 파일 정보를 저장할 배열
+    let deletedFiles = []; // 삭제된 파일 정보를 저장할 배열
     var bno = document.getElementById("bno").value;
 
     async function setDropzone() {
@@ -247,9 +248,6 @@
             const maxFiles = config.max_File_Num;
             const maxFilesize = config.max_file_Size;
             const acceptedFiles = config.file_ext.split(',').map(ext => '.' + ext).join(',');
-            console.log(maxFiles);
-            console.log(maxFilesize);
-            console.log(acceptedFiles);
 
             const myDropzone = new Dropzone("#myDropzone", {
                 url: "/fileAPI/upload",
@@ -261,37 +259,28 @@
                 success: function(file, response) {
                     console.log(response);
                     uploadedFiles.push(response);
-                    console.log(uploadedFiles);
+                    console.log("업로드 시 추가된 파일 목록 : " + uploadedFiles);
+                    file.savedFileName = response.savedFileName;
                 },
                 error: function(file, errorMessage) {
                     console.error(errorMessage);
                 },
-                //removedfile이 회색이어도 동작하는 거임
                 removedfile: function(file) {
-                    let fileName = file.upload ? file.upload.filename : file.name;
-                    fetch(`/fileAPI/delete?fileName=${encodeURIComponent(fileName)}&bno=${bno}`, {
-                        method: 'DELETE'
-                    })
-                        .then(response => response.text())
-                        .then(message => {
-                            console.log(message);
-                            if (message === "File deleted successfully") {
-                                let _ref;
-                                return (_ref = file.previewElement) != null ? _ref.parentNode.removeChild(file.previewElement) : void 0;
-                            } else {
-                                alert("파일 삭제 실패: " + message);
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            alert("파일 삭제 중 오류 발생");
-                        });
+                    let fileName = file.savedFileName;
+                    console.log("이게 컨트롤러에 보내질 파일 이름: " + fileName);
+
+                    if (fileName) {
+                        deletedFiles.push(fileName);
+                        uploadedFiles = uploadedFiles.filter(f => f.savedFileName !== fileName);
+                        let _ref;
+                        return (_ref = file.previewElement) != null ? _ref.parentNode.removeChild(file.previewElement) : void 0;
+                    }
                 }
             });
 
             // 기존 파일을 Dropzone에 추가
             existingFiles.forEach(file => {
-                let mockFile = { name: file.originalFileName }; // 실제 파일 크기를 알 수 있다면 사용
+                let mockFile = { name: file.originalFileName, savedFileName: file.savedFileName };
                 myDropzone.emit("addedfile", mockFile);
                 myDropzone.emit("complete", mockFile);
 
@@ -304,17 +293,17 @@
             // 최대 파일 수 초과 메서드
             myDropzone.on("maxfilesexceeded", function(file) {
                 this.removeFile(file); // 초과한 파일 제거
-                alert("업로드 가능한 최대 파일 수: "+maxFiles+"개"); // 사용자에게 알림
+                alert("업로드 가능한 최대 파일 수: " + maxFiles + "개");
             });
 
             // 최대용량 초과, 허용되지 않는 허용자 메서드
             myDropzone.on("addedfile", function(file) {
                 if (!acceptedFiles.includes(file.name.substring(file.name.lastIndexOf('.')))) {
                     this.removeFile(file); // 허용되지 않은 확장자를 가진 파일 제거
-                    alert("허용되지 않은 파일 형식입니다."); // 사용자에게 알림
+                    alert("허용되지 않은 파일 형식입니다.");
                 } else if (file.size > maxFilesize * 1024 * 1024) {
                     this.removeFile(file); // 설정된 용량을 초과하는 파일 제거
-                    alert("업로드 가능한 파일 최대용량: "+maxFilesize+"MB"); // 사용자에게 알림
+                    alert("업로드 가능한 파일 최대용량: " + maxFilesize + "MB");
                 }
             });
 
@@ -331,53 +320,51 @@
 <script>
     const modifyButton = document.getElementById("modify-button");
 
-    if(modifyButton){
-        // 클릭 이벤트가 감지되면 생성 API 요청
-        modifyButton.addEventListener("click", (event) => {
-            // 해시태그들을 담을 문자열 변수
+    if (modifyButton) {
+        modifyButton.addEventListener("click", async (event) => {
             let hashtags = "";
-            // 해시태그 목록 요소들을 선택
             const hashtagElements = document.querySelectorAll('.hashtag-list .btn-primary');
-            // 각 해시태그 목록 요소들을 순회하며 해시태그들을 문자열에 추가
             hashtagElements.forEach((element, index) => {
-                const hashtagText = element.querySelector('.text').innerText; // 해시태그 텍스트 가져오기
-
-                hashtags += hashtagText; // 해시태그 추가
+                const hashtagText = element.querySelector('.text').innerText;
+                hashtags += hashtagText;
             });
 
-            fetch("/boardAPI/modify", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    bno: document.getElementById("bno").value,
-                    title: document.getElementById("title").value, // 제목 데이터 model에 추가
-                    nickname: document.getElementById("nickname").value,
-                    content: editor.getHTML(), // 본문 내용 추가
-                    hashtag: hashtags,
-                    heart: document.getElementById('heart').value,
-                    hitcount: document.getElementById('hitcount').value,
-                    board_condition: "N",
-                    files: uploadedFiles,
-                })
-            }).then(response => {
+            try {
+                await Promise.all(deletedFiles.map(fileName => {
+                    return fetch(`/fileAPI/delete?fileName=${encodeURIComponent(fileName)}&bno=${bno}`, {
+                        method: 'DELETE'
+                    }).then(response => response.text());
+                }));
+
+                const response = await fetch("/boardAPI/modify", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        bno: document.getElementById("bno").value,
+                        title: document.getElementById("title").value,
+                        nickname: document.getElementById("nickname").value,
+                        content: editor.getHTML(),
+                        hashtag: hashtags,
+                        heart: document.getElementById('heart').value,
+                        hitcount: document.getElementById('hitcount').value,
+                        board_condition: "N",
+                        files: uploadedFiles,
+                    })
+                });
+
                 if (response.ok) {
-                    success();
+                    alert("수정 완료되었습니다.");
+                    location.replace("/viewboard/" + bno);
                 } else {
-                    fail();
+                    alert("수정 실패했습니다.");
                 }
-            });
+            } catch (error) {
+                console.error('Error:', error);
+                alert("수정 중 오류 발생");
+            }
         });
-
-        function success(){
-            alert("수정 완료되었습니다.");
-            const bno = document.getElementById("bno").value; // 수정된 게시물의 번호 가져오기
-            location.replace("/viewboard/" + bno); // 해당 게시물의 상세보기 페이지로 이동
-        }
-        function fail(){
-            alert("수정 실패했습니다.");
-        }
     }
 </script>
 

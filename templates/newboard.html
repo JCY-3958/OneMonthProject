@@ -46,7 +46,7 @@
 
                         <!-- 취소버튼 -->
                         <div class="col-sm-3 text-right">
-                            <a href="Loginmain" class="btn btn-danger btn-icon-split">
+                            <a href="Loginmain" class="btn btn-danger btn-icon-split" id="cancel-button">
                                 <span class="text">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;취소 버튼&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
                             </a>
                         </div>
@@ -134,6 +134,7 @@
         initialValue: '',                            // 내용의 초기 값으로, 반드시 마크다운 문자열 형태여야 함
         previewStyle: 'vertical',                    // 마크다운 프리뷰 스타일 (tab || vertical)
         placeholder: '내용을 입력해 주세요.',
+
     });
 
     /*editor.setHTML(document.getElementById('article-content').value);*/
@@ -191,6 +192,7 @@
     Dropzone.autoDiscover = false; // deprecated 된 옵션. false로 해놓는걸 공식문서에서 명시
 
     let uploadedFiles = []; // 업로드된 파일 정보를 저장할 배열
+    let deletedFiles = []; // 삭제된 파일 정보를 저장할 배열
 
     async function setDropzone() {
         try {
@@ -215,16 +217,36 @@
                     console.log(response);
                     uploadedFiles.push(response);
                     console.log(uploadedFiles);
+                    file.savedFileName = response.savedFileName;
                 },
                 error: function(file, errorMessage) {
                     console.error(errorMessage);
+                },
+                removedfile: function(file) {
+                    /*const index = uploadedFiles.findIndex(f => f.name === file.name);
+                    if (index !== -1) {
+                        deletedFiles.push(uploadedFiles[index]);
+                        uploadedFiles.splice(index, 1);
+                    }
+                    if (file.previewElement != null) {
+                        file.previewElement.parentNode.removeChild(file.previewElement);
+                    }*/
+                    let fileName = file.savedFileName;
+                    console.log("이게 컨트롤러에 보내질 파일 이름: " + fileName);
+
+                    if (fileName) {
+                        deletedFiles.push(fileName);
+                        uploadedFiles = uploadedFiles.filter(f => f.savedFileName !== fileName);
+                        let _ref;
+                        return (_ref = file.previewElement) != null ? _ref.parentNode.removeChild(file.previewElement) : void 0;
+                    }
                 }
             });
 
             // 최대 파일 수 초과 메서드
             myDropzone.on("maxfilesexceeded", function(file) {
                 this.removeFile(file); // 초과한 파일 제거
-                alert("업로드 가능한 최대 파일 수: "+maxFiles+"개"); // 사용자에게 알림
+                alert("업로드 가능한 최대 파일 수: " + maxFiles + "개"); // 사용자에게 알림
             });
 
             // 최대용량 초과, 허용되지 않는 허용자 메서드
@@ -234,7 +256,7 @@
                     alert("허용되지 않은 파일 형식입니다."); // 사용자에게 알림
                 } else if (file.size > maxFilesize * 1024 * 1024) {
                     this.removeFile(file); // 설정된 용량을 초과하는 파일 제거
-                    alert("업로드 가능한 파일 최대용량: "+maxFilesize+"MB"); // 사용자에게 알림
+                    alert("업로드 가능한 파일 최대용량: " + maxFilesize + "MB"); // 사용자에게 알림
                 }
             });
 
@@ -249,55 +271,87 @@
 </script>
 
 <script>
-
     const createButton = document.getElementById("create-btn");
 
-    if(createButton){
+    if (createButton) {
         // 클릭 이벤트가 감지되면 생성 API 요청
-        createButton.addEventListener("click", (event) => {
-            console.log(document.getElementById("nickname").value);
-            // 해시태그들을 담을 문자열 변수
-            let hashtags = "";
-            // 해시태그 목록 요소들을 선택
-            const hashtagElements = document.querySelectorAll('.hashtag-list .btn-primary');
-            // 각 해시태그 목록 요소들을 순회하며 해시태그들을 문자열에 추가
-            hashtagElements.forEach((element, index) => {
-                const hashtagText = element.querySelector('.text').innerText; // 해시태그 텍스트 가져오기
+        createButton.addEventListener("click", async (event) => {
+            event.preventDefault();
 
-                hashtags += hashtagText; // 해시태그 추가
-            });
+            try {
+                // 해시태그들을 담을 문자열 변수
+                let hashtags = "";
+                // 해시태그 목록 요소들을 선택
+                const hashtagElements = document.querySelectorAll('.hashtag-list .btn-primary');
+                // 각 해시태그 목록 요소들을 순회하며 해시태그들을 문자열에 추가
+                hashtagElements.forEach((element, index) => {
+                    const hashtagText = element.querySelector('.text').innerText; // 해시태그 텍스트 가져오기
+                    hashtags += hashtagText; // 해시태그 추가
+                });
 
-            fetch("/boardAPI/register", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    title: document.getElementById("title").value, // 제목 데이터 model에 추가
-                    nickname: document.getElementById("nickname").value,
-                    content: editor.getHTML(), // 본문 내용 추가
-                    hashtag: hashtags,
-                    heart: 0,
-                    hitcount: 0,
-                    board_condition: "N",
-                    files: uploadedFiles,
-                })
-            }).then(response => {
+                // 게시물 등록 요청
+                const response = await fetch("/boardAPI/register", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        title: document.getElementById("title").value, // 제목 데이터 model에 추가
+                        nickname: document.getElementById("nickname").value,
+                        content: editor.getHTML(), // 본문 내용 추가
+                        hashtag: hashtags,
+                        heart: 0,
+                        hitcount: 0,
+                        board_condition: "N",
+                        files: uploadedFiles,
+                    })
+                });
+
                 if (response.ok) {
+                    // 게시물이 성공적으로 등록된 경우 삭제된 파일 서버에서 제거
+                    for (let fileName of deletedFiles) {
+                        await fetch(`/fileAPI/delete?fileName=${fileName}&bno=0`, {
+                            method: "DELETE"
+                        });
+                    }
                     success();
                 } else {
                     fail();
                 }
-            });
+            } catch (error) {
+                console.error('Failed to create post:', error);
+                alert("게시물 등록에 실패했습니다.");
+            }
         });
 
-        function success(){
+        function success() {
             alert("등록 완료되었습니다.");
             location.replace("/Loginmain");
         }
-        function fail(){
+
+        function fail() {
             alert("등록 실패했습니다.");
         }
+    }
+
+    const cancelButton = document.getElementById("cancel-button");
+
+    if (cancelButton) {
+        // 클릭 이벤트가 감지되면 임시 파일 삭제 요청
+        cancelButton.addEventListener("click", async (event) => {
+            try {
+                for (let file of uploadedFiles) {
+                    await fetch(`/fileAPI/delete?fileName=${file.savedFileName}&bno=0`, {
+                        method: "DELETE"
+                    });
+                }
+                alert("취소되었습니다.");
+                location.replace("/Loginmain");
+            } catch (error) {
+                console.error('Failed to delete files:', error);
+                alert("파일 삭제에 실패했습니다.");
+            }
+        });
     }
 </script>
 
