@@ -2,7 +2,6 @@ package com.codeqna.controller;
 
 import com.codeqna.dto.FileConfigDTO;
 import com.codeqna.dto.UploadFileDto;
-import com.codeqna.entity.Board;
 import com.codeqna.entity.Fileconfig;
 import com.codeqna.entity.Uploadfile;
 import com.codeqna.repository.FileconfigRepository;
@@ -34,7 +33,7 @@ public class FileConfigController {
     private UploadfileRepository uploadfileRepository;
 
     @PostMapping("/saveFileConfig")
-    public String saveFileConfig(@RequestBody FileConfigDTO fileConfigDTO) {
+    public ResponseEntity<FileConfigDTO> saveFileConfig(@RequestBody FileConfigDTO fileConfigDTO) {
         // 항상 단일 레코드만 존재하게 처리
         Fileconfig fileconfig = fileconfigRepository.findById(1).orElse(new Fileconfig());
         fileconfig.setId(1); // ID는 항상 1로 고정
@@ -43,7 +42,8 @@ public class FileConfigController {
         fileconfig.setFile_ext(fileConfigDTO.getFileExt());
 
         fileconfigRepository.save(fileconfig);
-        return "Success";
+        return ResponseEntity.ok().
+                build();
     }
 
     @GetMapping("/fileconfig")
@@ -55,6 +55,9 @@ public class FileConfigController {
     // 파일이 저장될 경로 설정
     @Value("${upload.path}")
     private String uploadPath;
+
+//    @Autowired
+//    private UploadfileRepository uploadfileRepository;
 
     //실제 경로(로컬, no DB)에 저장
     @PostMapping("/upload")
@@ -95,20 +98,34 @@ public class FileConfigController {
     @DeleteMapping("/delete")
     public ResponseEntity<String> deleteFile(@RequestParam("fileName") String fileName, @RequestParam("bno") Long bno) {
         try {
+            System.out.println("등록 취소 시 여기로 와야함");
+            if(bno == 0) {
+                Path filePath = Paths.get(uploadPath, fileName);
+                System.out.println("삭제할 파일이 뭐고 : " + filePath);
+                Files.deleteIfExists(filePath);
+                return ResponseEntity.status(HttpStatus.OK).body("File deleted successfully");
+            }
             Uploadfile file = uploadfileRepository.findByOriginalFileName(fileName, bno);
+
             System.out.println("파일 이름 : " + fileName);
             System.out.println("게시물 번호: " + bno);
-            Path filePath = Paths.get(uploadPath, file.getSaved_file_name());
-            System.out.println("파일 경로 : " + filePath);
-            Files.deleteIfExists(filePath);
+            //Path filePath = Paths.get(uploadPath, file.getSaved_file_name());
+            //System.out.println("파일 경로 : " + filePath);
+            //Files.deleteIfExists(filePath);
 
             // 파일 엔티티도 삭제
 
             System.out.println("여기까지 와야함");
             System.out.println("그러면 파일이 null인가 : " + file);
             if (file != null) {
+                Path filePath = Paths.get(uploadPath, file.getSaved_file_name());
+                Files.deleteIfExists(filePath);
                 System.out.println("파일 삭제 성공: " + fileName);
                 uploadfileRepository.delete(file);
+            } else {
+                Path filePath = Paths.get(uploadPath, fileName);
+                System.out.println("삭제할 파일이 뭐고 : " + filePath);
+                Files.deleteIfExists(filePath);
             }
 
             return ResponseEntity.status(HttpStatus.OK).body("File deleted successfully");

@@ -13,6 +13,6 @@ public interface UploadfileRepository extends JpaRepository<Uploadfile, Long> {
     // 여기에 필요한 추가적인 메서드 선언이 가능합니다.
     List<Uploadfile> findByBoard_Bno(Long bno);
 
-    @Query(value = "SELECT * FROM uploadfile WHERE bno = :bno AND original_file_name = :originalFileName", nativeQuery = true)
-    Uploadfile findByOriginalFileName(@Param("originalFileName") String originalFileName, @Param("bno") Long bno);
+    @Query(value = "SELECT * FROM uploadfile WHERE bno = :bno AND saved_file_name = :savedFileName", nativeQuery = true)
+    Uploadfile findByOriginalFileName(@Param("savedFileName") String savedFileName, @Param("bno") Long bno);
 }
