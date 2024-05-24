@@ -189,12 +189,9 @@
 
 <!-- 드롭존 스크립트 -->
 <script>
-    Dropzone.autoDiscover = false; // deprecated 된 옵션. false로 해놓는걸 공식문서에서 명시
+    document.addEventListener("DOMContentLoaded", async function() {
+        let uploadedFiles = []; // 업로드된 파일 정보를 저장할 배열
 
-    let uploadedFiles = []; // 업로드된 파일 정보를 저장할 배열
-    let deletedFiles = []; // 삭제된 파일 정보를 저장할 배열
-
-    async function setDropzone() {
         try {
             const response = await fetch('/fileAPI/fileconfig');
             const config = await response.json();
@@ -202,159 +199,94 @@
             const maxFiles = config.max_File_Num;
             const maxFilesize = config.max_file_Size;
             const acceptedFiles = config.file_ext.split(',').map(ext => '.' + ext).join(',');
-            console.log(maxFiles);
-            console.log(maxFilesize);
-            console.log(acceptedFiles);
 
             const myDropzone = new Dropzone("#myDropzone", {
                 url: "/fileAPI/upload",
-                addRemoveLinks: true, // 업로드 후 파일 삭제버튼 표시 여부
-                dictRemoveFile: '삭제', // 삭제버튼 표시 텍스트
-                maxFiles: maxFiles, // 업로드 파일수
-                maxFilesize: maxFilesize, // 최대업로드용량
-                acceptedFiles: acceptedFiles, // 이미지 파일 포맷만 허용
+                addRemoveLinks: true,
+                dictRemoveFile: '삭제',
+                maxFiles: maxFiles,
+                maxFilesize: maxFilesize,
+                acceptedFiles: acceptedFiles,
+                autoProcessQueue: false,
                 success: function(file, response) {
-                    console.log(response);
+                    console.log("얘가 동작?");
+                    console.log("리스펀스 뭐 오는데 : " + response);
                     uploadedFiles.push(response);
-                    console.log(uploadedFiles);
-                    file.savedFileName = response.savedFileName;
+                    console.log("배열에 들어간 애들 : " + uploadedFiles);
+                    createboard();
                 },
                 error: function(file, errorMessage) {
                     console.error(errorMessage);
-                },
-                removedfile: function(file) {
-                    /*const index = uploadedFiles.findIndex(f => f.name === file.name);
-                    if (index !== -1) {
-                        deletedFiles.push(uploadedFiles[index]);
-                        uploadedFiles.splice(index, 1);
-                    }
-                    if (file.previewElement != null) {
-                        file.previewElement.parentNode.removeChild(file.previewElement);
-                    }*/
-                    let fileName = file.savedFileName;
-                    console.log("이게 컨트롤러에 보내질 파일 이름: " + fileName);
-
-                    if (fileName) {
-                        deletedFiles.push(fileName);
-                        uploadedFiles = uploadedFiles.filter(f => f.savedFileName !== fileName);
-                        let _ref;
-                        return (_ref = file.previewElement) != null ? _ref.parentNode.removeChild(file.previewElement) : void 0;
-                    }
                 }
             });
 
-            // 최대 파일 수 초과 메서드
             myDropzone.on("maxfilesexceeded", function(file) {
-                this.removeFile(file); // 초과한 파일 제거
-                alert("업로드 가능한 최대 파일 수: " + maxFiles + "개"); // 사용자에게 알림
+                this.removeFile(file);
+                alert("업로드 가능한 최대 파일 수: " + maxFiles + "개");
             });
 
-            // 최대용량 초과, 허용되지 않는 허용자 메서드
             myDropzone.on("addedfile", function(file) {
-                if (!acceptedFiles.includes(file.name.substring(file.name.lastIndexOf('.')))) {
-                    this.removeFile(file); // 허용되지 않은 확장자를 가진 파일 제거
-                    alert("허용되지 않은 파일 형식입니다."); // 사용자에게 알림
-                } else if (file.size > maxFilesize * 1024 * 1024) {
-                    this.removeFile(file); // 설정된 용량을 초과하는 파일 제거
-                    alert("업로드 가능한 파일 최대용량: " + maxFilesize + "MB"); // 사용자에게 알림
+                if (!acceptedFiles.includes(file.name.substring(file.name.lastIndexOf('.'))) || file.size > maxFilesize * 1024 * 1024) {
+                    this.removeFile(file);
+                    if (!acceptedFiles.includes(file.name.substring(file.name.lastIndexOf('.')))) {
+                        alert("허용되지 않은 파일 형식입니다.");
+                    } else {
+                        alert("업로드 가능한 파일 최대용량: " + maxFilesize + "MB");
+                    }
                 }
             });
+
+            const createButton = document.getElementById("create-btn");
+            if (createButton) {
+                createButton.addEventListener("click", async (event) => {
+                    event.preventDefault();
+
+                    myDropzone.processQueue();
+                });
+            }
 
         } catch (error) {
             console.error('Failed to fetch file config:', error);
         }
-    }
 
-    document.addEventListener("DOMContentLoaded", function() {
-        setDropzone();
-    });
-</script>
-
-<script>
-    const createButton = document.getElementById("create-btn");
-
-    if (createButton) {
-        // 클릭 이벤트가 감지되면 생성 API 요청
-        createButton.addEventListener("click", async (event) => {
-            event.preventDefault();
-
+        async function createboard() {
             try {
-                // 해시태그들을 담을 문자열 변수
                 let hashtags = "";
-                // 해시태그 목록 요소들을 선택
-                const hashtagElements = document.querySelectorAll('.hashtag-list .btn-primary');
-                // 각 해시태그 목록 요소들을 순회하며 해시태그들을 문자열에 추가
-                hashtagElements.forEach((element, index) => {
-                    const hashtagText = element.querySelector('.text').innerText; // 해시태그 텍스트 가져오기
-                    hashtags += hashtagText; // 해시태그 추가
+                document.querySelectorAll('.hashtag-list .btn-primary').forEach((element) => {
+                    hashtags += element.querySelector('.text').innerText;
                 });
+                console.log("DB에 저장될 애들 : " + uploadedFiles);
 
-                // 게시물 등록 요청
-                const response = await fetch("/boardAPI/register", {
+                fetch("/boardAPI/register", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
-                        title: document.getElementById("title").value, // 제목 데이터 model에 추가
+                        title: document.getElementById("title").value,
                         nickname: document.getElementById("nickname").value,
-                        content: editor.getHTML(), // 본문 내용 추가
+                        content: editor.getHTML(),
                         hashtag: hashtags,
                         heart: 0,
                         hitcount: 0,
                         board_condition: "N",
                         files: uploadedFiles,
-                    })
+                    }),
+                })
+                .then(() => {
+                    alert("등록 완료되었습니다.");
+                    location.replace("/Loginmain");
+                })
+                .catch(() => {
+                    alert("등록 실패했습니다.");
                 });
 
-                if (response.ok) {
-                    // 게시물이 성공적으로 등록된 경우 삭제된 파일 서버에서 제거
-                    for (let fileName of deletedFiles) {
-                        await fetch(`/fileAPI/delete?fileName=${fileName}&bno=0`, {
-                            method: "DELETE"
-                        });
-                    }
-                    success();
-                } else {
-                    fail();
-                }
             } catch (error) {
                 console.error('Failed to create post:', error);
                 alert("게시물 등록에 실패했습니다.");
             }
-        });
-
-        function success() {
-            alert("등록 완료되었습니다.");
-            location.replace("/Loginmain");
         }
-
-        function fail() {
-            alert("등록 실패했습니다.");
-        }
-    }
-
-    const cancelButton = document.getElementById("cancel-button");
-
-    if (cancelButton) {
-        // 클릭 이벤트가 감지되면 임시 파일 삭제 요청
-        cancelButton.addEventListener("click", async (event) => {
-            try {
-                for (let file of uploadedFiles) {
-                    await fetch(`/fileAPI/delete?fileName=${file.savedFileName}&bno=0`, {
-                        method: "DELETE"
-                    });
-                }
-                alert("취소되었습니다.");
-                location.replace("/Loginmain");
-            } catch (error) {
-                console.error('Failed to delete files:', error);
-                alert("파일 삭제에 실패했습니다.");
-            }
-        });
-    }
+    });
 </script>
-
-
 </body>
 </html>

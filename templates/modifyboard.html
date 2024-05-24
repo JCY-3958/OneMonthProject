@@ -230,13 +230,12 @@
 
 <!-- 드롭존 스크립트 -->
 <script>
-    Dropzone.autoDiscover = false;
 
-    let uploadedFiles = []; // 업로드된 파일 정보를 저장할 배열
-    let deletedFiles = []; // 삭제된 파일 정보를 저장할 배열
-    var bno = document.getElementById("bno").value;
+    document.addEventListener("DOMContentLoaded", async function() {
+        let uploadedFiles = []; // 업로드될 파일 정보를 저장할 배열
+        let deletedFiles = []; // 삭제된 파일 정보를 저장할 배열
+        var bno = document.getElementById("bno").value;
 
-    async function setDropzone() {
         try {
             // 기존 파일 목록을 가져옴
             const response = await fetch(`/fileAPI/files/${bno}`);
@@ -250,17 +249,21 @@
             const acceptedFiles = config.file_ext.split(',').map(ext => '.' + ext).join(',');
 
             const myDropzone = new Dropzone("#myDropzone", {
-                url: "/fileAPI/upload",
+                url: `/fileAPI/modify/${bno}`,
                 addRemoveLinks: true, // 업로드 후 파일 삭제버튼 표시 여부
                 dictRemoveFile: '삭제', // 삭제버튼 표시 텍스트
                 maxFiles: maxFiles, // 업로드 파일수
                 maxFilesize: maxFilesize, // 최대업로드용량
                 acceptedFiles: acceptedFiles, // 이미지 파일 포맷만 허용
+                autoProcessQueue: false,
                 success: function(file, response) {
-                    console.log(response);
+                    //console.log(response);
+                    console.log("요까지");
                     uploadedFiles.push(response);
-                    console.log("업로드 시 추가된 파일 목록 : " + uploadedFiles);
-                    file.savedFileName = response.savedFileName;
+                    console.log("삭제될 파일 : " + deletedFiles);
+                    //console.log("업로드 시 추가된 파일 목록 : " + uploadedFiles);
+                    //file.savedFileName = response.savedFileName;
+                    modifyboard();
                 },
                 error: function(file, errorMessage) {
                     console.error(errorMessage);
@@ -307,36 +310,31 @@
                 }
             });
 
+            const modifyButton = document.getElementById("modify-button");
+            if (modifyButton) {
+                modifyButton.addEventListener("click", async (event) => {
+                    event.preventDefault();
+                    console.log("여기서 막히니?");
+
+                    myDropzone.processQueue();
+                });
+            }
+
         } catch (error) {
             console.error('Failed to fetch file config:', error);
         }
-    }
 
-    document.addEventListener("DOMContentLoaded", function() {
-        setDropzone();
-    });
-</script>
-
-<script>
-    const modifyButton = document.getElementById("modify-button");
-
-    if (modifyButton) {
-        modifyButton.addEventListener("click", async (event) => {
-            let hashtags = "";
-            const hashtagElements = document.querySelectorAll('.hashtag-list .btn-primary');
-            hashtagElements.forEach((element, index) => {
-                const hashtagText = element.querySelector('.text').innerText;
-                hashtags += hashtagText;
-            });
-
+        async function modifyboard() {
             try {
-                await Promise.all(deletedFiles.map(fileName => {
-                    return fetch(`/fileAPI/delete?fileName=${encodeURIComponent(fileName)}&bno=${bno}`, {
-                        method: 'DELETE'
-                    }).then(response => response.text());
-                }));
+                console.log("수정 버튼 누르면");
+                let hashtags = "";
+                const hashtagElements = document.querySelectorAll('.hashtag-list .btn-primary');
+                hashtagElements.forEach((element, index) => {
+                    const hashtagText = element.querySelector('.text').innerText;
+                    hashtags += hashtagText;
+                });
 
-                const response = await fetch("/boardAPI/modify", {
+                fetch("/boardAPI/modify", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -352,21 +350,21 @@
                         board_condition: "N",
                         files: uploadedFiles,
                     })
-                });
-
-                if (response.ok) {
+                })
+                .then(() => {
                     alert("수정 완료되었습니다.");
                     location.replace("/viewboard/" + bno);
-                } else {
+                })
+                .catch(() => {
                     alert("수정 실패했습니다.");
-                }
+                });
+
             } catch (error) {
                 console.error('Error:', error);
                 alert("수정 중 오류 발생");
             }
-        });
-    }
+        }
+    });
 </script>
-
 </body>
 </html>
