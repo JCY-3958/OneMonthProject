@@ -62,6 +62,7 @@ public class FileConfigController {
     //실제 경로(로컬, no DB)에 저장
     @PostMapping("/upload")
     public ResponseEntity<UploadFileDto> uploadFile(@RequestParam("file") MultipartFile file){
+        System.out.println("파일 수정 시 여기로");
 
         try {
             // 저장할 파일 경로 생성
@@ -94,11 +95,39 @@ public class FileConfigController {
                 .collect(Collectors.toList());
     }
 
-    //게시물에 등록된 파일 삭제
-    @DeleteMapping("/delete")
-    public ResponseEntity<String> deleteFile(@RequestParam("fileName") String fileName, @RequestParam("bno") Long bno) {
+    //게시물에 등록된 파일 수정
+    @PostMapping("/modify/{bno}")
+    public ResponseEntity<UploadFileDto> deleteFile(@RequestParam("file") MultipartFile file, @PathVariable Long bno) {
         try {
-            System.out.println("등록 취소 시 여기로 와야함");
+            System.out.println("수정 버튼 누르면 여기");
+            //먼저 게시물에 있는 파일 전부 삭제
+            uploadfileRepository.deleteByBoard_Bno(bno);
+
+            //받아온 file로 로컬에 있는 게시물의 파일 삭제
+            List<Uploadfile> existingFiles = uploadfileRepository.findByBoard_Bno(bno);
+            for (Uploadfile existingFile : existingFiles) {
+                Path filePath = Paths.get(uploadPath, existingFile.getSaved_file_name());
+                Files.deleteIfExists(filePath);
+            }
+
+            // 저장할 파일 경로 생성
+            String originalFileName = file.getOriginalFilename();
+            String savedFileName = UUID.randomUUID().toString() + "_" + originalFileName;
+            Path savedFilePath = Paths.get(uploadPath, savedFileName);
+            System.out.println("실제 저장된 경로인가:" + savedFilePath);
+
+            // 파일 저장
+            Files.createDirectories(savedFilePath.getParent());
+            file.transferTo(savedFilePath.toFile());
+
+            // 파일 정보 반환
+            UploadFileDto fileDto = new UploadFileDto();
+            fileDto.setOriginalFileName(originalFileName);
+            fileDto.setSavedFileName(savedFileName);
+            return ResponseEntity.status(HttpStatus.OK).body(fileDto);
+
+            //
+            /*System.out.println("등록 취소 시 여기로 와야함");
             if(bno == 0) {
                 Path filePath = Paths.get(uploadPath, fileName);
                 System.out.println("삭제할 파일이 뭐고 : " + filePath);
@@ -126,12 +155,13 @@ public class FileConfigController {
                 Path filePath = Paths.get(uploadPath, fileName);
                 System.out.println("삭제할 파일이 뭐고 : " + filePath);
                 Files.deleteIfExists(filePath);
-            }
+            }*/
 
-            return ResponseEntity.status(HttpStatus.OK).body("File deleted successfully");
+            //return ResponseEntity.status(HttpStatus.OK).body("File deleted successfully");
         } catch (IOException e) {
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("File deletion failed");
+            System.out.println("여기서 오류?");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 }
