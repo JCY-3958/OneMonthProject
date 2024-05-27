@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -25,8 +26,8 @@ public class Reply {
     @JoinColumn(name = "bno", nullable = false)
     private Board board;
 
-    @Column(name = "nickname")
-    private String nickname;
+//    @Column(name = "nickname")
+//    private String nickname;
 
     @ManyToOne
     @JoinColumn(name = "email",referencedColumnName = "email")
@@ -49,12 +50,21 @@ public class Reply {
     @OrderBy("regdate ASC")
     @OneToMany(mappedBy = "parentCommentId",cascade = CascadeType.ALL)
     private Set<Reply> childComments = new LinkedHashSet<>();
-    
+
+    @Column(name = "delete_time")
+    private LocalDateTime delete_time;
+
+    @Column(name = "recover_time")
+    private LocalDateTime recover_time;
+
+    private String adopted;
+
     private Reply(Board board, Users user, Long parentCommentId, String content) {
         this.board = board;
         this.user = user;
         this.parentCommentId = parentCommentId;
         this.content = content;
+        this.adopted = "N";
 
     }
 
@@ -67,6 +77,11 @@ public class Reply {
         this.getChildComments().add(child);
     }
 
+    public void deleteReply(){
+        this.reply_condition="Y";
+        this.delete_time = LocalDateTime.now();
+        this.recover_time = null;
+    }
 
 
 

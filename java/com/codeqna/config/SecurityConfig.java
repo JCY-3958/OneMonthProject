@@ -5,6 +5,7 @@ import com.codeqna.dto.security.BoardPrincipal;
 import com.codeqna.entity.Users;
 import com.codeqna.repository.UserRepository;
 import com.codeqna.service.UserService;
+import com.codeqna.service.VisitorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
@@ -21,6 +22,7 @@ import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import java.util.Map;
@@ -33,6 +35,9 @@ import static org.springframework.security.web.util.matcher.AntPathRequestMatche
 public class SecurityConfig {
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private VisitorService visitorService;
 
     @Bean
     public PasswordEncoder passwordEncoder(){
@@ -49,7 +54,7 @@ public class SecurityConfig {
 
         http.formLogin((it) -> it
                 .loginPage("/users/login")
-                .defaultSuccessUrl("/Loginmain")
+                .defaultSuccessUrl("/main")
                 .successHandler(customAuthenticationSuccessHandler())
                 .usernameParameter("email")
                 .failureUrl("/users/login/error")
@@ -83,13 +88,17 @@ public class SecurityConfig {
                 .requestMatchers(antMatcher("/boardAPI/**")).permitAll()
                 .requestMatchers(antMatcher("/fileAPI/**")).permitAll()
                 .requestMatchers(antMatcher("/viewboard/**")).permitAll()
+                .requestMatchers(antMatcher("/newboard/**")).permitAll()
+                .requestMatchers(antMatcher("/image_qna/**")).permitAll()
+                .requestMatchers(antMatcher("/files/**")).permitAll()
                 .requestMatchers(antMatcher("/admin/**")).hasRole("ADMIN")
-                .requestMatchers(antMatcher("/Loginmain")).hasAnyRole("USER","ADMIN")
+//                .requestMatchers(antMatcher("/Loginmain")).hasAnyRole("USER","ADMIN")
 
                 .anyRequest().authenticated();
         });
 
-//        http.exceptionHandling((e) -> e.authenticationEntryPoint(new CustomAuthenticationEntryPoint()));
+//ip찍기
+        http.addFilterBefore(new VisitorFilter(visitorService), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -108,7 +117,7 @@ public class SecurityConfig {
             String email = authentication.getName();
             Users users = userRepository.findByEmail(email).orElseThrow();
             if (users.getUser_condition().equals("N")) {
-                response.sendRedirect("/Loginmain");
+                response.sendRedirect("/main");
             } else {
                 SecurityContextHolder.clearContext();
                 request.getSession().invalidate();

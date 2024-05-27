@@ -5,7 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -15,8 +14,5 @@ public interface UploadfileRepository extends JpaRepository<Uploadfile, Long> {
     List<Uploadfile> findByBoard_Bno(Long bno);
 
     @Query(value = "SELECT * FROM uploadfile WHERE bno = :bno AND saved_file_name = :savedFileName", nativeQuery = true)
-    Uploadfile findByOriginalFileName(@Param("savedFileName") String savedFileName, @Param("bno") Long bno);
-
-    @Transactional
-    void deleteByBoard_Bno(Long bno);
+    Uploadfile findByOriginalFileName(@Param("savedFileName") String saved_file_name, @Param("bno") Long bno);
 }

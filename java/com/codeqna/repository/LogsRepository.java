@@ -18,7 +18,7 @@ public interface LogsRepository extends JpaRepository<Logs, Long> {
     List<LogsViewDto> findLogsByTitle(@Param("keyword") String keyword);
 
     @Query("SELECT new com.codeqna.dto.LogsViewDto(b, l.delete_time, l.recover_time) " +
-            "FROM Logs l INNER JOIN l.board b WHERE b.nickname LIKE %:keyword%")
+            "FROM Logs l INNER JOIN l.board b WHERE b.user.nickname LIKE %:keyword%")
     List<LogsViewDto> findLogsByNickname(@Param("keyword") String keyword);
 
     @Query("SELECT new com.codeqna.dto.LogsViewDto(b, l.delete_time, l.recover_time) " +
@@ -42,7 +42,7 @@ public interface LogsRepository extends JpaRepository<Logs, Long> {
     List<LogsViewDto> findLogsByDeletetimeBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
     @Query("SELECT new com.codeqna.dto.LogsViewDto(b, l.delete_time, l.recover_time) " +
-            "FROM Logs l INNER JOIN l.board b WHERE l.delete_time BETWEEN :start AND :end")
+            "FROM Logs l INNER JOIN l.board b WHERE l.recover_time BETWEEN :start AND :end")
     List<LogsViewDto> findLogsByRecovertimeBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
 }
